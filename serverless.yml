@@ -1,0 +1,50 @@
+service: aws-code
+frameworkVersion: "2"
+
+custom:
+  bucketName: extension-sample-bucket
+  forceExclude:
+    - aws-sdk
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  profile: 873102235883_AdministratorAccess
+  stage: dev
+  region: "ap-south-1"
+  versionFunctions: false
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    REGION: ap-south-1
+    ImageBucket: ${self:custom.bucketName}
+  apiGateway:
+    minimumCompressionSize: 1024
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:PutObject"
+        - "s3:DeleteObject"
+      Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+  - serverless-pseudo-parameters
+
+functions:
+  imageLoader:
+    handler: Image-getter/index.image
+    events:
+      - http:
+          path: /image
+          method: ANY
+      - http:
+          path: /image/{proxy+}
+          method: ANY
+
+resources:
+  Resources:
+    ImageBucketPolicy: ${file(./resources/imageBucketPolicy.yml)}

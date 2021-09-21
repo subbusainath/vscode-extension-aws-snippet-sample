@@ -1,0 +1,29 @@
+{
+  "name": "aws-code",
+  "version": "1.0.0",
+  "description": "sample code for antstack byte regarding aws code snippet vscode extension",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subbusainath/vscode-extension-aws-snippet-sample.git"
+  },
+  "author": "subbusainath",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/subbusainath/vscode-extension-aws-snippet-sample/issues"
+  },
+  "homepage": "https://github.com/subbusainath/vscode-extension-aws-snippet-sample#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "serverless-http": "^2.7.0",
+    "serverless-pseudo-parameters": "^2.6.1"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.989.0",
+    "serverless-dotenv-plugin": "^3.9.0",
+    "serverless-offline": "^8.2.0"
+  }
+}

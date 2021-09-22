@@ -15,7 +15,7 @@
       "environment": {
         "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
         "REGION": "ap-south-1",
-        "ImageBucket": "extension-sample-bucket"
+        "ImageBucket": "extension-sample-bucket-dev"
       },
       "apiGateway": {
         "minimumCompressionSize": 1024
@@ -28,7 +28,7 @@
             "s3:PutObject",
             "s3:DeleteObject"
           ],
-          "Resource": "arn:aws:s3:::extension-sample-bucket/*"
+          "Resource": "arn:aws:s3:::extension-sample-bucket-dev/*"
         }
       ],
       "compiledCloudFormationTemplate": {
@@ -108,6 +108,12 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/aws-code-dev-imageLoader"
+            }
+          },
+          "NoApiGatewayLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/aws-code-dev-noApiGateway"
             }
           },
           "IamRoleLambdaExecution": {
@@ -197,7 +203,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/aws-code/dev/1632223765759-2021-09-21T11:29:25.759Z/aws-code.zip"
+                "S3Key": "serverless/aws-code/dev/1632300102717-2021-09-22T08:41:42.717Z/aws-code.zip"
               },
               "Handler": "Image-getter/index.image",
               "Runtime": "nodejs12.x",
@@ -208,7 +214,7 @@
                 "Variables": {
                   "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
                   "REGION": "ap-south-1",
-                  "ImageBucket": "extension-sample-bucket"
+                  "ImageBucket": "extension-sample-bucket-dev"
                 }
               },
               "Role": {
@@ -220,6 +226,176 @@
             },
             "DependsOn": [
               "ImageLoaderLogGroup"
+            ]
+          },
+          "NoApiGatewayLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/aws-code/dev/1632300102717-2021-09-22T08:41:42.717Z/aws-code.zip"
+              },
+              "Handler": "No-ApiGw/index.handler",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "aws-code-dev-noApiGateway",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+                  "REGION": "ap-south-1",
+                  "ImageBucket": "extension-sample-bucket-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "NoApiGatewayLogGroup"
+            ]
+          },
+          "NoApiGatewayCustomS31": {
+            "Type": "Custom::S3",
+            "Version": 1,
+            "DependsOn": [
+              "NoApiGatewayLambdaFunction",
+              "CustomDashresourceDashexistingDashs3LambdaFunction"
+            ],
+            "Properties": {
+              "ServiceToken": {
+                "Fn::GetAtt": [
+                  "CustomDashresourceDashexistingDashs3LambdaFunction",
+                  "Arn"
+                ]
+              },
+              "FunctionName": "aws-code-dev-noApiGateway",
+              "BucketName": "extension-sample-bucket-dev",
+              "BucketConfigs": [
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Rules": []
+                }
+              ]
+            }
+          },
+          "IamRoleCustomResourcesLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "aws-code",
+                        "custom-resources-lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "s3",
+                              "",
+                              "",
+                              "extension-sample-bucket-dev"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "s3:PutBucketNotification",
+                          "s3:GetBucketNotification"
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "lambda",
+                              {
+                                "Ref": "AWS::Region"
+                              },
+                              {
+                                "Ref": "AWS::AccountId"
+                              },
+                              "function",
+                              "*"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "lambda:AddPermission",
+                          "lambda:RemovePermission"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "CustomDashresourceDashexistingDashs3LambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/aws-code/dev/1632300102717-2021-09-22T08:41:42.717Z/custom-resources.zip"
+              },
+              "FunctionName": "aws-code-dev-custom-resource-existing-s3",
+              "Handler": "s3/handler.handler",
+              "MemorySize": 1024,
+              "Runtime": "nodejs12.x",
+              "Timeout": 180,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleCustomResourcesLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "IamRoleCustomResourcesLambdaExecution"
             ]
           },
           "ApiGatewayRestApi": {
@@ -348,7 +524,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1632223763001": {
+          "ApiGatewayDeployment1632300100002": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -401,7 +577,7 @@
           "ImageBucketPolicy": {
             "Type": "AWS::S3::Bucket",
             "Properties": {
-              "BucketName": "extension-sample-bucket",
+              "BucketName": "extension-sample-bucket-dev",
               "CorsConfiguration": {
                 "CorsRules": [
                   {
@@ -547,7 +723,7 @@
       "vpc": {}
     },
     "custom": {
-      "bucketName": "extension-sample-bucket",
+      "bucketName": "extension-sample-bucket-dev",
       "forceExclude": [
         "aws-sdk"
       ]
@@ -583,6 +759,24 @@
         "timeout": 6,
         "runtime": "nodejs12.x",
         "vpc": {}
+      },
+      "noApiGateway": {
+        "handler": "No-ApiGw/index.handler",
+        "events": [
+          {
+            "s3": {
+              "bucket": "extension-sample-bucket-dev",
+              "event": "s3:ObjectCreated:*",
+              "existing": true
+            }
+          }
+        ],
+        "name": "aws-code-dev-noApiGateway",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {}
       }
     },
     "resources": {
@@ -590,7 +784,7 @@
         "ImageBucketPolicy": {
           "Type": "AWS::S3::Bucket",
           "Properties": {
-            "BucketName": "extension-sample-bucket",
+            "BucketName": "extension-sample-bucket-dev",
             "CorsConfiguration": {
               "CorsRules": [
                 {
@@ -644,7 +838,7 @@
     "artifact": "/Users/subbusainathrengasamy/Personal/Antstack_bytes/AWS-Code/.serverless/aws-code.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/aws-code/dev/1632223765759-2021-09-21T11:29:25.759Z",
+    "artifactDirectoryName": "serverless/aws-code/dev/1632300102717-2021-09-22T08:41:42.717Z",
     "artifact": "aws-code.zip"
   }
 }
